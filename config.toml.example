@@ -1,0 +1,16 @@
+# Each quoted value can contain one or more environment variables.
+# For example, a site deployed on Heroku would use "${PORT}" and "${DATABASE_URL}".
+# Each environment variable can have a default value:
+#   ${LISTEN:2490} defaults to 2490 if $LISTEN is not set.
+[server]
+listen = "${LISTEN:2490}" # port number or systemd socket name.
+tls_listen = "${TLS_LISTEN:2491}" # port number or systemd socket name.
+tls_cert = "${TLS_CERT}" # path to a cert.pem
+tls_key = "${TLS_KEY}" # path to a key.pem
+
+[database]
+url = "postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT:5432}/${DB_NAME}"
+
+[log]
+format = "${LOG_FORMAT:json}" # One of: text, json.
+level = "${LOG_LEVEL:info}" # One of: debug, info, warn, error, fatal.
