@@ -11,6 +11,7 @@ import (
 	"github.com/bojanz/httpx"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/httplog"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 
@@ -74,9 +75,14 @@ func (app *Application) Start() error {
 
 // buildRouter builds the router.
 func (app *Application) buildRouter() *chi.Mux {
+	if app.cfg.Log.Format == "json" {
+		httplog.DefaultOptions.JSON = true
+	}
+	// Log only responses (default is request&response).
+	httplog.DefaultOptions.Concise = true
+
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
+	r.Use(httplog.RequestLogger(*app.logger))
 	r.Use(middleware.Heartbeat("/health"))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
