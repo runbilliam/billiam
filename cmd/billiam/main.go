@@ -71,8 +71,14 @@ func cmdServe() {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
+	app, err := billiam.New(config, logger)
+	if err != nil {
+		logger.Fatal().Msg(err.Error())
+	}
 
-	logger.Info().Msgf("Starting billiam %s", billiam.Version)
+	if err := app.Start(); err != nil {
+		logger.Fatal().Msg(err.Error())
+	}
 }
 
 func cmdVersion() {

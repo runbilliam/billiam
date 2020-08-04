@@ -3,5 +3,98 @@
 
 package billiam
 
+import (
+	"context"
+	"net/http"
+	"strconv"
+
+	"github.com/bojanz/httpx"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/rs/zerolog"
+)
+
 // Version is the current application version. Replaced at build time.
 var Version = "v1"
+
+// Application represents the application.
+type Application struct {
+	cfg    *Config
+	logger *zerolog.Logger
+	db     *pgxpool.Pool
+	server *httpx.Server
+}
+
+// New creates a new application.
+func New(cfg *Config, logger *zerolog.Logger) (*Application, error) {
+	db, err := pgxpool.Connect(context.Background(), cfg.Database.URL)
+	if err != nil {
+		return nil, err
+	}
+	app := &Application{
+		cfg:    cfg,
+		logger: logger,
+		db:     db,
+	}
+
+	return app, nil
+}
+
+// Start starts the application.
+func (app *Application) Start() error {
+	app.logger.Info().Msgf("Starting billiam %s", Version)
+	httpAddr := toAddr(app.cfg.Server.Listen)
+	httpsAddr := toAddr(app.cfg.Server.TLSListen)
+	r := app.buildRouter()
+
+	if app.cfg.Server.TLSCert != "" {
+		app.logger.Info().Msgf("Listening for HTTPS on %v", httpsAddr)
+		app.server = httpx.NewServer(httpsAddr, r)
+		err := app.server.ListenAndServeTLS(app.cfg.Server.TLSCert, app.cfg.Server.TLSKey)
+		if err != http.ErrServerClosed {
+			return err
+		}
+	} else {
+		app.logger.Info().Msgf("Listening for HTTP on %v", httpAddr)
+		app.server = httpx.NewServer(httpAddr, r)
+		err := app.server.ListenAndServe()
+		if err != http.ErrServerClosed {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// buildRouter builds the router.
+func (app *Application) buildRouter() *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/health"))
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello World"))
+	})
+
+	return r
+}
+
+// toAddr() converts a port number / systemd socket name into an addr.
+func toAddr(listen string) string {
+	if listen == "" {
+		return ""
+	}
+
+	var addr string
+	if _, err := strconv.Atoi(listen); err == nil {
+		// Port number. Prefix with ":".
+		addr = ":" + listen
+	} else {
+		// Systemd socket. Prefix with "systemd:".
+		addr = "systemd:" + listen
+	}
+
+	return addr
+}
