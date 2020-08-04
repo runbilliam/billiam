@@ -6,7 +6,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime"
+	"syscall"
 
 	"github.com/runbilliam/billiam"
 	"github.com/runbilliam/billiam/pkg/logger"
@@ -76,8 +78,20 @@ func cmdServe() {
 		logger.Fatal().Msg(err.Error())
 	}
 
+	errCh := make(chan error)
+	go func() {
+		shutdownCh := make(chan os.Signal)
+		signal.Notify(shutdownCh, os.Interrupt, syscall.SIGTERM)
+		<-shutdownCh
+
+		errCh <- app.Shutdown()
+	}()
+
 	if err := app.Start(); err != nil {
 		logger.Fatal().Msg(err.Error())
+	}
+	if err := <-errCh; err != nil {
+		logger.Warn().Msg(err.Error())
 	}
 }
 

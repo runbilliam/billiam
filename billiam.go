@@ -5,8 +5,10 @@ package billiam
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/bojanz/httpx"
 	"github.com/go-chi/chi"
@@ -69,6 +71,22 @@ func (app *Application) Start() error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+// Shutdown shuts down the application.
+func (app *Application) Shutdown() error {
+	app.logger.Info().Msgf("Shutting down")
+
+	timeout := 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	err := app.server.Shutdown(ctx)
+	if err == context.DeadlineExceeded {
+		return fmt.Errorf("%v timeout exceeded while waiting on shutdown", timeout)
+	}
+	app.db.Close()
 
 	return nil
 }
