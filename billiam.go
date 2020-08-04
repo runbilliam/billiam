@@ -13,6 +13,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
+
+	"github.com/runbilliam/billiam/pkg/logger"
 )
 
 // Version is the current application version. Replaced at build time.
@@ -46,11 +48,13 @@ func (app *Application) Start() error {
 	app.logger.Info().Msgf("Starting billiam %s", Version)
 	httpAddr := toAddr(app.cfg.Server.Listen)
 	httpsAddr := toAddr(app.cfg.Server.TLSListen)
+	stdLogger := logger.NewStandard(app.logger)
 	r := app.buildRouter()
 
 	if app.cfg.Server.TLSCert != "" {
 		app.logger.Info().Msgf("Listening for HTTPS on %v", httpsAddr)
 		app.server = httpx.NewServer(httpsAddr, r)
+		app.server.ErrorLog = stdLogger
 		err := app.server.ListenAndServeTLS(app.cfg.Server.TLSCert, app.cfg.Server.TLSKey)
 		if err != http.ErrServerClosed {
 			return err
@@ -58,6 +62,7 @@ func (app *Application) Start() error {
 	} else {
 		app.logger.Info().Msgf("Listening for HTTP on %v", httpAddr)
 		app.server = httpx.NewServer(httpAddr, r)
+		app.server.ErrorLog = stdLogger
 		err := app.server.ListenAndServe()
 		if err != http.ErrServerClosed {
 			return err
