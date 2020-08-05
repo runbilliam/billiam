@@ -1,6 +1,7 @@
+export CGO_ENABLED=0
 VERSION := $(shell git describe --tags --always)
 BUILD_INFO := -X "github.com/runbilliam/billiam.Version=$(VERSION)"
-FLAGS := -trimpath -ldflags='$(BUILD_INFO) -w -s'
+FLAGS := -trimpath -ldflags='$(BUILD_INFO) -w -s -extldflags "-static"'
 DEV_FLAGS := -trimpath -ldflags='$(BUILD_INFO)'
 
 build:

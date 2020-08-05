@@ -1,0 +1,43 @@
+# Can't use v3 until the next Docker release, which will re-add depends_on
+# condition support. See https://github.com/compose-spec/compose-spec/pull/72
+version: "2.4"
+
+services:
+    app:
+        build: .
+        depends_on:
+            db:
+              condition: service_healthy
+        environment:
+            - LOG_FORMAT=text
+            - LOG_LEVEL=debug
+            - DB_USER=billiam
+            - DB_PASS=billiam
+            - DB_HOST=db
+            - DB_PORT=5432
+            - DB_NAME=billiam
+        ports:
+            - "80:2490"
+            - "443:2491"
+        volumes:
+            - app:/srv
+
+    db:
+        image: postgres:12
+        container_name: "db"
+        environment:
+            - POSTGRES_USER=billiam
+            - POSTGRES_PASSWORD=billiam
+            - POSTGRES_DB=billiam
+        healthcheck:
+            test: ["CMD-SHELL", "/usr/bin/pg_isready -U billiam"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+        restart: always
+        volumes:
+            - db:/var/lib/postgresql/data
+
+volumes:
+    app:
+    db:
