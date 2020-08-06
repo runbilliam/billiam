@@ -1,0 +1,12 @@
+[Unit]
+Description=Billiam HTTPS socket
+PartOf=billiam.service
+
+[Socket]
+ListenStream=443
+NoDelay=true
+Service=billiam.service
+FileDescriptorName=billiam-https
+
+[Install]
+WantedBy=sockets.target

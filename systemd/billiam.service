@@ -1,0 +1,18 @@
+[Unit]
+Description=Billiam
+Requires=billiam-http.socket billiam-https.socket
+
+[Service]
+Type=simple
+WorkingDirectory=/srv
+ExecStart=/usr/local/bin/billiam serve
+NonBlocking=true
+Restart=always
+
+Environment="LISTEN=billiam-http"
+Environment="TLS_LISTEN=billiam-https"
+#Environment="TLS_CERT=cert.pem"
+#Environment="TLS_KEY=key.pem"
+
+[Install]
+WantedBy=multi-user.target
