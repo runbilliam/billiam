@@ -4,11 +4,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 
 	"github.com/runbilliam/billiam"
 	"github.com/runbilliam/billiam/pkg/log"
@@ -73,8 +76,13 @@ func cmdServe() {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
-	app, err := billiam.New(config, logger)
+	db, err := pgxpool.Connect(context.Background(), config.Database.URL)
 	if err != nil {
+		logger.Fatal().Msg(err.Error())
+	}
+	app, err := billiam.New(config, logger, db)
+	if err != nil {
+		db.Close()
 		logger.Fatal().Msg(err.Error())
 	}
 
@@ -88,11 +96,13 @@ func cmdServe() {
 	}()
 
 	if err := app.Start(); err != nil {
+		db.Close()
 		logger.Fatal().Msg(err.Error())
 	}
 	if err := <-errCh; err != nil {
 		logger.Warn().Msg(err.Error())
 	}
+	db.Close()
 }
 
 func cmdVersion() {

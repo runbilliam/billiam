@@ -32,11 +32,7 @@ type Application struct {
 }
 
 // New creates a new application.
-func New(cfg *Config, logger *zerolog.Logger) (*Application, error) {
-	db, err := pgxpool.Connect(context.Background(), cfg.Database.URL)
-	if err != nil {
-		return nil, err
-	}
+func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, error) {
 	app := &Application{
 		cfg:    cfg,
 		logger: logger,
@@ -86,7 +82,6 @@ func (app *Application) Shutdown() error {
 	if err == context.DeadlineExceeded {
 		return fmt.Errorf("%v timeout exceeded while waiting on shutdown", timeout)
 	}
-	app.db.Close()
 
 	return nil
 }
