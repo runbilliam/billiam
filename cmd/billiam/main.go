@@ -11,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/runbilliam/billiam"
-	"github.com/runbilliam/billiam/pkg/logger"
+	"github.com/runbilliam/billiam/pkg/log"
 )
 
 const usage = `
@@ -68,7 +68,7 @@ func cmdServe() {
 		}
 		os.Exit(1)
 	}
-	logger, err := logger.New(config.Log.Format, config.Log.Level)
+	logger, err := log.New(config.Log.Format, config.Log.Level)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)

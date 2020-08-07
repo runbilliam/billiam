@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/rs/zerolog"
 
-	"github.com/runbilliam/billiam/pkg/logger"
+	"github.com/runbilliam/billiam/pkg/log"
 )
 
 // Version is the current application version. Replaced at build time.
@@ -51,7 +51,7 @@ func (app *Application) Start() error {
 	app.logger.Info().Msgf("Starting billiam %s", Version)
 	httpAddr := toAddr(app.cfg.Server.Listen)
 	httpsAddr := toAddr(app.cfg.Server.TLSListen)
-	stdLogger := logger.NewStandard(app.logger)
+	stdLogger := log.NewStandard(app.logger)
 	r := app.buildRouter()
 
 	if app.cfg.Server.TLSCert != "" {

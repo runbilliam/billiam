@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Bojan Zivanovic and contributors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package logger provides zerolog helpers.
-package logger
+// Package log provides logging helpers.
+package log
 
 import (
 	"fmt"
