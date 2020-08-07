@@ -26,15 +26,15 @@ var Version = "v1"
 
 // Application represents the application.
 type Application struct {
-	cfg    *Config
-	logger *zerolog.Logger
-	db     *pgxpool.Pool
-	server *httpx.Server
+	cfg        *Config
+	logger     *zerolog.Logger
+	db         *pgxpool.Pool
+	mainServer *httpx.Server
 }
 
 // New creates a new application.
 func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, error) {
-	var server *httpx.Server
+	var mainServer *httpx.Server
 	stdLogger := log.NewStandard(logger)
 	if cfg.Server.TLSCert != "" {
 		httpsAddr := toAddr(cfg.Server.TLSListen)
@@ -42,18 +42,18 @@ func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, e
 		if err != nil {
 			return nil, err
 		}
-		server = httpx.NewServerTLS(httpsAddr, cert, nil)
-		server.ErrorLog = stdLogger
+		mainServer = httpx.NewServerTLS(httpsAddr, cert, nil)
+		mainServer.ErrorLog = stdLogger
 	} else {
 		httpAddr := toAddr(cfg.Server.Listen)
-		server = httpx.NewServer(httpAddr, nil)
-		server.ErrorLog = stdLogger
+		mainServer = httpx.NewServer(httpAddr, nil)
+		mainServer.ErrorLog = stdLogger
 	}
 	app := &Application{
-		cfg:    cfg,
-		logger: logger,
-		db:     db,
-		server: server,
+		cfg:        cfg,
+		logger:     logger,
+		db:         db,
+		mainServer: mainServer,
 	}
 
 	return app, nil
@@ -62,14 +62,14 @@ func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, e
 // Start starts the application.
 func (app *Application) Start() error {
 	app.logger.Info().Msgf("Starting billiam %s", Version)
-	app.server.Handler = app.buildRouter()
+	app.mainServer.Handler = app.buildRouter()
 
 	proto := "HTTP"
-	if app.server.IsTLS() {
+	if app.mainServer.IsTLS() {
 		proto = "HTTPS"
 	}
-	app.logger.Info().Msgf("Listening for %v on %v", proto, app.server.Addr)
-	if err := app.server.Start(); err != http.ErrServerClosed {
+	app.logger.Info().Msgf("Listening for %v on %v", proto, app.mainServer.Addr)
+	if err := app.mainServer.Start(); err != http.ErrServerClosed {
 		return err
 	}
 
@@ -80,16 +80,16 @@ func (app *Application) Start() error {
 func (app *Application) Shutdown() error {
 	app.logger.Info().Msgf("Shutting down")
 
-	timeout := 5 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	mainTimeout := 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), mainTimeout)
 	defer cancel()
-	err := app.server.Shutdown(ctx)
+	err := app.mainServer.Shutdown(ctx)
 	if err == context.DeadlineExceeded {
 		proto := "HTTP"
-		if app.server.IsTLS() {
+		if app.mainServer.IsTLS() {
 			proto = "HTTPS"
 		}
-		return fmt.Errorf("%v timeout exceeded while waiting on %v shutdown", timeout, proto)
+		return fmt.Errorf("%v timeout exceeded while waiting on %v shutdown", mainTimeout, proto)
 	}
 
 	return nil
