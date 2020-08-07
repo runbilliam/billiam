@@ -5,6 +5,7 @@ package billiam
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -33,10 +34,26 @@ type Application struct {
 
 // New creates a new application.
 func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, error) {
+	var server *httpx.Server
+	stdLogger := log.NewStandard(logger)
+	if cfg.Server.TLSCert != "" {
+		httpsAddr := toAddr(cfg.Server.TLSListen)
+		cert, err := tls.LoadX509KeyPair(cfg.Server.TLSCert, cfg.Server.TLSKey)
+		if err != nil {
+			return nil, err
+		}
+		server = httpx.NewServerTLS(httpsAddr, cert, nil)
+		server.ErrorLog = stdLogger
+	} else {
+		httpAddr := toAddr(cfg.Server.Listen)
+		server = httpx.NewServer(httpAddr, nil)
+		server.ErrorLog = stdLogger
+	}
 	app := &Application{
 		cfg:    cfg,
 		logger: logger,
 		db:     db,
+		server: server,
 	}
 
 	return app, nil
@@ -45,27 +62,15 @@ func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, e
 // Start starts the application.
 func (app *Application) Start() error {
 	app.logger.Info().Msgf("Starting billiam %s", Version)
-	httpAddr := toAddr(app.cfg.Server.Listen)
-	httpsAddr := toAddr(app.cfg.Server.TLSListen)
-	stdLogger := log.NewStandard(app.logger)
-	r := app.buildRouter()
+	app.server.Handler = app.buildRouter()
 
-	if app.cfg.Server.TLSCert != "" {
-		app.logger.Info().Msgf("Listening for HTTPS on %v", httpsAddr)
-		app.server = httpx.NewServer(httpsAddr, r)
-		app.server.ErrorLog = stdLogger
-		err := app.server.ListenAndServeTLS(app.cfg.Server.TLSCert, app.cfg.Server.TLSKey)
-		if err != http.ErrServerClosed {
-			return err
-		}
-	} else {
-		app.logger.Info().Msgf("Listening for HTTP on %v", httpAddr)
-		app.server = httpx.NewServer(httpAddr, r)
-		app.server.ErrorLog = stdLogger
-		err := app.server.ListenAndServe()
-		if err != http.ErrServerClosed {
-			return err
-		}
+	proto := "HTTP"
+	if app.server.IsTLS() {
+		proto = "HTTPS"
+	}
+	app.logger.Info().Msgf("Listening for %v on %v", proto, app.server.Addr)
+	if err := app.server.Start(); err != http.ErrServerClosed {
+		return err
 	}
 
 	return nil
@@ -80,7 +85,11 @@ func (app *Application) Shutdown() error {
 	defer cancel()
 	err := app.server.Shutdown(ctx)
 	if err == context.DeadlineExceeded {
-		return fmt.Errorf("%v timeout exceeded while waiting on shutdown", timeout)
+		proto := "HTTP"
+		if app.server.IsTLS() {
+			proto = "HTTPS"
+		}
+		return fmt.Errorf("%v timeout exceeded while waiting on %v shutdown", timeout, proto)
 	}
 
 	return nil

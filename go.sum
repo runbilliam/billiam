@@ -4,6 +4,8 @@ github.com/bojanz/envx v0.0.0-20200729170014-a0f20c059008 h1:PMXVarFyY5wfZZ5Q/J7
 github.com/bojanz/envx v0.0.0-20200729170014-a0f20c059008/go.mod h1:Znca3S9EBQqN2cOY2hNkv3AeP1dqvpKDz52mzELtuDw=
 github.com/bojanz/httpx v0.0.0-20200730151723-034c087ec914 h1:8Lb6UFq5KbB0Rgs5yLiatnDehVspS4MMyl+Ef84RHfI=
 github.com/bojanz/httpx v0.0.0-20200730151723-034c087ec914/go.mod h1:CmIVARSG6JaD9lvVI2Y0Jur5UvpndDJTcSOmgMdMqSQ=
+github.com/bojanz/httpx v0.0.0-20200807132812-56a60f731daf h1:q2qt5oZmaGksRc0ZFam4gaa1kMIyC9qoVRHt34DJZZc=
+github.com/bojanz/httpx v0.0.0-20200807132812-56a60f731daf/go.mod h1:CmIVARSG6JaD9lvVI2Y0Jur5UvpndDJTcSOmgMdMqSQ=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
@@ -178,7 +180,6 @@ golang.org/x/xerrors v0.0.0-20190513163551-3ee3066db522/go.mod h1:I/5z698sn9Ka8T
 golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=
-gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
