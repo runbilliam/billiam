@@ -1,14 +1,18 @@
 // Copyright (c) 2020 Bojan Zivanovic and contributors
 // SPDX-License-Identifier: Apache-2.0
 
+//go:generate go run gen.go
+
 package billiam
 
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -17,7 +21,10 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/httplog"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/tern/migrate"
 	"github.com/rs/zerolog"
+	"github.com/shurcooL/httpfs/path/vfspath"
+	"github.com/shurcooL/httpfs/vfsutil"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/runbilliam/billiam/pkg/log"
@@ -25,6 +32,9 @@ import (
 
 // Version is the current application version. Replaced at build time.
 var Version = "v1"
+
+// ErrDbSchemaCurrent is the error returned when no schema updates are needed.
+var ErrDbSchemaCurrent = errors.New("Database schema is up to date")
 
 // Application represents the application.
 type Application struct {
@@ -70,6 +80,10 @@ func New(cfg *Config, logger *zerolog.Logger, db *pgxpool.Pool) (*Application, e
 // Start starts the application.
 func (app *Application) Start() error {
 	app.logger.Info().Msgf("Starting billiam %s", Version)
+	// Automatically apply pending database schema updates.
+	if err := app.UpdateDB(); err != nil && err != ErrDbSchemaCurrent {
+		return err
+	}
 	app.mainServer.Handler = app.buildRouter()
 
 	g, ctx := errgroup.WithContext(context.Background())
@@ -132,6 +146,45 @@ func (app *Application) Shutdown() error {
 	return nil
 }
 
+// UpdateDB applies database schema updates.
+func (app *Application) UpdateDB() error {
+	ctx := context.Background()
+	conn, err := app.db.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	migrator, err := migrate.NewMigratorEx(ctx, conn.Conn(), "schema", &migrate.MigratorOptions{
+		MigratorFS: migratorFS{Migrations},
+	})
+	if err != nil {
+		return err
+	}
+	err = migrator.LoadMigrations("")
+	if err != nil {
+		return err
+	}
+
+	latestVersion := int32(len(migrator.Migrations))
+	currentVersion, err := migrator.GetCurrentVersion(ctx)
+	if err != nil {
+		return err
+	}
+	if latestVersion == currentVersion {
+		return ErrDbSchemaCurrent
+	}
+	if latestVersion < currentVersion {
+		return fmt.Errorf("Database schema version is v%v, but the latest update is v%v", currentVersion, latestVersion)
+	}
+	if currentVersion == 0 {
+		app.logger.Info().Msgf("Creating database schema")
+	} else {
+		app.logger.Info().Msgf("Updating database schema from v%v to v%v", currentVersion, latestVersion)
+	}
+
+	return migrator.Migrate(ctx)
+}
+
 // buildRouter builds the router.
 func (app *Application) buildRouter() *chi.Mux {
 	if app.cfg.Log.Format == "json" {
@@ -168,6 +221,26 @@ func (h httpRedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Connection", "close")
 	http.Redirect(w, r, r.URL.String(), http.StatusMovedPermanently)
+}
+
+// migratorFS wraps a http.Filesystem for usage with jackc/tern.
+type migratorFS struct {
+	fs http.FileSystem
+}
+
+// ReadDir implements the migrate.MigratorFS interface.
+func (m migratorFS) ReadDir(dirname string) ([]os.FileInfo, error) {
+	return vfsutil.ReadDir(m.fs, dirname)
+}
+
+// ReadFile implements the migrate.MigratorFS interface.
+func (m migratorFS) ReadFile(filename string) ([]byte, error) {
+	return vfsutil.ReadFile(m.fs, filename)
+}
+
+// Glob implements the migrate.MigratorFS interface.
+func (m migratorFS) Glob(pattern string) (matches []string, err error) {
+	return vfspath.Glob(m.fs, pattern)
 }
 
 // toAddr() converts a port number / systemd socket name into an addr.

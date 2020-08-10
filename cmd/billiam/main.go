@@ -23,6 +23,7 @@ Usage: billiam [command]
 Commands:
   init         Initialize a new site in the current directory
   serve        Start the HTTP server
+  updatedb     Apply database schema updates
   version      Show version information
 `
 
@@ -39,6 +40,8 @@ func main() {
 		cmdInit()
 	case "serve":
 		cmdServe()
+	case "updatedb":
+		cmdUpdateDB()
 	case "version":
 		cmdVersion()
 	default:
@@ -62,15 +65,7 @@ func cmdInit() {
 }
 
 func cmdServe() {
-	config, err := billiam.ReadConfig("config.toml")
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Fprintln(os.Stderr, "Error: No site found in the current directory")
-		} else {
-			fmt.Fprintln(os.Stderr, "Error:", err)
-		}
-		os.Exit(1)
-	}
+	config := mustReadConfig("config.toml")
 	logger, err := log.New(config.Log.Format, config.Log.Level)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
@@ -105,7 +100,52 @@ func cmdServe() {
 	db.Close()
 }
 
+func cmdUpdateDB() {
+	config := mustReadConfig("config.toml")
+	logger, err := log.New(config.Log.Format, config.Log.Level)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
+	}
+	db, err := pgxpool.Connect(context.Background(), config.Database.URL)
+	if err != nil {
+		logger.Fatal().Msg(err.Error())
+	}
+	app, err := billiam.New(config, logger, db)
+	if err != nil {
+		db.Close()
+		logger.Fatal().Msg(err.Error())
+	}
+
+	if err := app.UpdateDB(); err != nil {
+		if err == billiam.ErrDbSchemaCurrent {
+			db.Close()
+			logger.Info().Msg(err.Error())
+		} else {
+			db.Close()
+			logger.Fatal().Msg(err.Error())
+		}
+		return
+	}
+	logger.Info().Msg("Database schema is now up to date")
+	db.Close()
+}
+
 func cmdVersion() {
 	fmt.Fprintf(os.Stdout, "billiam %s %s/%s %s\n",
 		billiam.Version, runtime.GOOS, runtime.GOARCH, runtime.Version())
+}
+
+func mustReadConfig(filename string) *billiam.Config {
+	config, err := billiam.ReadConfig(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Fprintln(os.Stderr, "Error: No site found in the current directory")
+		} else {
+			fmt.Fprintln(os.Stderr, "Error:", err)
+		}
+		os.Exit(1)
+	}
+
+	return config
 }
