@@ -4,7 +4,7 @@ WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN make clean && make
+RUN make
 
 FROM gcr.io/distroless/static
 
