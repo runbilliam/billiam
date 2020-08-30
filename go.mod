@@ -15,5 +15,6 @@ require (
 	github.com/pelletier/go-toml v1.8.0
 	github.com/rs/zerolog v1.19.0
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
+	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 )
