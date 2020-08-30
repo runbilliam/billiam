@@ -28,6 +28,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/runbilliam/billiam/pkg/log"
+	"github.com/runbilliam/billiam/setup"
 )
 
 // Version is the current application version. Replaced at build time.
@@ -193,9 +194,12 @@ func (app *Application) buildRouter() *chi.Mux {
 	// Log only responses (default is request&response).
 	httplog.DefaultOptions.Concise = true
 
+	setupHandler := setup.NewHandler(app.logger)
+
 	r := chi.NewRouter()
 	r.Use(httplog.RequestLogger(*app.logger))
 	r.Use(middleware.Heartbeat("/health"))
+	r.Route("/setup", setupHandler.Routes)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))

@@ -4,6 +4,9 @@ BUILD_INFO := -X "github.com/runbilliam/billiam.Version=$(VERSION)"
 FLAGS := -trimpath -ldflags='$(BUILD_INFO) -w -s -extldflags "-static"'
 DEV_FLAGS := -trimpath -ldflags='$(BUILD_INFO)'
 
+assets:
+	cd setup && npm run build
+
 build: clean
 	go generate
 	go build -o ./bin/billiam $(FLAGS) cmd/billiam/*

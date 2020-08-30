@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "tailwind": "tailwindcss build assets/css/style.src.css -o assets/css/style.css",
+    "build": "env NODE_ENV=production postcss assets/css/style.src.css -o assets/css/style.css"
+  },
+  "devDependencies": {
+    "@tailwindcss/custom-forms": "^0.2.1",
+    "autoprefixer": "^9.8.6",
+    "color": "^3.1.2",
+    "cssnano": "^4.1.2",
+    "postcss-cli": "^7.1.1",
+    "tailwindcss": "^1.7.2"
+  }
+}

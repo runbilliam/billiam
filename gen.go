@@ -25,4 +25,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
 	}
+
+	err = vfsgen.Generate(http.Dir("setup/assets"), vfsgen.Options{
+		Filename:        "setup/assets.go",
+		PackageName:     "setup",
+		BuildTags:       "!dev",
+		VariableName:    "Assets",
+		VariableComment: "Assets are setup assets, embedded by vfsgen.",
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
+	}
 }

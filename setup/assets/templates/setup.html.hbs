@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Billiam - Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Open%20Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/setup/assets/css/style.css" />
+  <script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+      if (typeof Intl.DateTimeFormat != 'undefined') {
+        // Pre-select the user's timezone.
+        let tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+        let select = document.querySelector(`#timezone`)
+        let option = document.querySelector(`#timezone option[value="${tz}"]`)
+        if (select.hasAttribute("data-preselect") && option) {
+          option.setAttribute('selected', 'selected')
+        }
+      }
+      if (typeof Intl.DisplayNames != 'undefined') {
+        // Add currency names to the list of codes.
+        let names = new Intl.DisplayNames(['en'], { type: 'currency' })
+        let options = document.querySelectorAll('#currency option')
+        options.forEach(function (option) {
+          let code = option.getAttribute('value')
+          let name = names.of(code)
+          option.setAttribute('label', `${code} - ${name}`)
+        })
+      }
+    })
+  </script>
+</head>
+
+<body>
+  <div class="flex items-center min-h-screen p-6 bg-gray-50">
+    <div class="flex-1 h-full max-w-4xl mx-auto overflow-hidden bg-white rounded-lg shadow-xl">
+      <div class="flex flex-col overflow-y-auto md:flex-row">
+        <div class="hidden md:block md:h-auto md:w-1/2 pl-12">
+          <img class="object-contain w-full h-full" src="/setup/assets/img/setup.svg" alt="Setup" />
+        </div>
+        <div class="flex items-center justify-center p-6 md:p-12 md:w-1/2">
+          <div class="w-full">
+            <h1 class="mb-4 text-xl font-semibold text-gray-700">
+              Welcome to Billiam
+            </h1>
+            <form action="/setup" method="POST">
+              <label class="block text-sm">
+                <span class="text-gray-700">Email</span>
+                <input type="email" name="email" value="{{values.email.[0]}}"
+                  class="block w-full mt-1 text-sm form-input{{#if errors.email}} invalid{{/if}}" required />
+                {{#each errors.email}}
+                <div class="block text-xs text-red-600">{{this}}</div>
+                {{/each}}
+              </label>
+              <label class="block mt-4 text-sm">
+                <span class="text-gray-700">Password</span>
+                <input type="password" name="password"
+                  class="block w-full mt-1 text-sm form-input{{#if errors.password}} invalid{{/if}}" required />
+                {{#each errors.password}}
+                <div class="block text-xs text-red-600">{{this}}</div>
+                {{/each}}
+              </label>
+
+              <label class="block mt-4 text-sm">
+                <span class="text-gray-700">
+                  Timezone
+                </span>
+                <select id="timezone" name="timezone"
+                  class="block w-full mt-1 text-sm form-select{{#if errors.timezone}} invalid{{/if}}" required
+                  {{#equal values.timezone.[0] ""}}data-preselect{{/equal}}
+                >
+                  {{#each timezones}}
+                  <option value="{{this}}"{{#equal values.timezone.[0] this}}selected{{/equal}}>{{this}}</option>
+                  {{/each}}
+                </select>
+                {{#each errors.timezone}}
+                <div class="block text-xs text-red-600">{{this}}</div>
+                {{/each}}
+              </label>
+
+              <label class="block mt-4 text-sm">
+                <span class="text-gray-700">
+                  Currency
+                </span>
+                <select id="currency" name="currency"
+                  class="block w-full mt-1 text-sm form-select{{#if errors.currency}} invalid{{/if}}"
+                  required
+                >
+                  <optgroup label="Common currencies">
+                    {{#each commonCurrencies}}
+                    <option value="{{this}}"{{#equal values.currency.[0] this}} selected{{/equal}}>{{this}}</option>
+                    {{/each}}
+                  </optgroup>
+                  <optgroup label="Other currencies">
+                    {{#each otherCurrencies}}
+                    <option value="{{this}}"{{#equal values.currency.[0] this}} selected{{/equal}}>{{this}}</option>
+                    {{/each}}
+                  </optgroup>
+                </select>
+                {{#each errors.currency}}
+                <div class="block text-xs text-red-600">{{this}}</div>
+                {{/each}}
+              </label>
+
+              <input type="submit" value="Create account"
+                class="block w-full px-4 py-2 mt-4 text-sm font-medium leading-5 submit">
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
