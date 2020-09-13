@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Bojan Zivanovic and contributors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package validation provides validation helpers.
 package validation
 
 const (
