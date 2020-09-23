@@ -3,6 +3,8 @@
 
 package address
 
+import "regexp"
+
 // Field represents the address field.
 type Field string
 
@@ -76,6 +78,42 @@ type Format struct {
 	PostalCodePattern string
 	ShowRegionID      bool
 	Regions           map[string]string
+}
+
+// Requires returns whether the given field is required.
+func (f Format) IsRequired(field Field) bool {
+	for _, ff := range f.Required {
+		if ff == field {
+			return true
+		}
+	}
+	return false
+}
+
+// CheckRegion checks whether the given region is valid.
+func (f Format) CheckRegion(region string) bool {
+	if region == "" {
+		return false
+	}
+	if len(f.Regions) == 0 {
+		// A non-empty region is always valid if no regions have been predefined.
+		return true
+	}
+	_, ok := f.Regions[region]
+	return ok
+}
+
+// CheckPostalCode checks whether the given postal code is valid.
+func (f Format) CheckPostalCode(postalCode string) bool {
+	if postalCode == "" {
+		return false
+	}
+	if f.PostalCodePattern == "" {
+		// A non-empty postal code is always valid if no pattern is available.
+		return true
+	}
+	rx := regexp.MustCompile(f.PostalCodePattern)
+	return rx.MatchString(postalCode)
 }
 
 // GetFormat returns an address format for the given country code.
