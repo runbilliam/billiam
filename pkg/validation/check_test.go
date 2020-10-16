@@ -14,7 +14,7 @@ func TestCheckEmail(t *testing.T) {
 		email string
 		want  bool
 	}{
-		{"", false},
+		{"", true},
 		{"example", false},
 		{"@example.com", false},
 		{"email@-example.com", false},

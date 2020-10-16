@@ -24,7 +24,7 @@ func TestIsValid(t *testing.T) {
 		name string
 		want bool
 	}{
-		{"", false},
+		{"", true},
 		{"INVALID", false},
 		{"europe/belgrade", false},
 		{"Europe/Belgrade", true},

@@ -9,9 +9,11 @@ import "regexp"
 var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // CheckEmail checks whether the given email is valid.
+//
+// An empty email is considered valid.
 func CheckEmail(email string) bool {
 	if email == "" {
-		return false
+		return true
 	}
 	return len(email) <= 254 && rxEmail.MatchString(email)
 }

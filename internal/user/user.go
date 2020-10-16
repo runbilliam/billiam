@@ -50,22 +50,23 @@ func (u User) Validate() validation.Errors {
 	if u.Version == 0 {
 		errs.Add("version", validation.Required("Version is required."))
 	}
+	if u.Email == "" {
+		errs.Add("email", validation.Required("Email is required."))
+	}
 	if u.Password == "" {
 		errs.Add("password", validation.Required("Password is required."))
+	}
+	if u.Timezone == "" {
+		errs.Add("timezone", validation.Required("Timezone is required."))
 	}
 	if u.CreatedAt.IsZero() {
 		errs.Add("created_at", validation.Required("CreatedAt is required."))
 	}
 
-	if u.Email == "" {
-		errs.Add("email", validation.Required("Email is required."))
-	} else if !validation.CheckEmail(u.Email) {
+	if !validation.CheckEmail(u.Email) {
 		errs.Add("email", validation.InvalidValue("Email is invalid."))
 	}
-
-	if u.Timezone == "" {
-		errs.Add("timezone", validation.Required("Timezone is required."))
-	} else if !timezone.IsValid(u.Timezone) {
+	if !timezone.IsValid(u.Timezone) {
 		errs.Add("timezone", validation.InvalidChoice("Invalid timezone."))
 	}
 

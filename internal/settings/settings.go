@@ -39,16 +39,17 @@ func (s Settings) Validate() validation.Errors {
 	if s.SiteName == "" {
 		errs.Add("site_name", validation.Required("Site name is required."))
 	}
-
 	if s.Timezone == "" {
 		errs.Add("timezone", validation.Required("Timezone is required."))
-	} else if !timezone.IsValid(s.Timezone) {
-		errs.Add("timezone", validation.InvalidChoice("Invalid timezone."))
 	}
-
 	if s.Currency == "" {
 		errs.Add("currency", validation.Required("Currency is required."))
-	} else if !currency.IsValid(s.Currency) {
+	}
+
+	if !timezone.IsValid(s.Timezone) {
+		errs.Add("timezone", validation.InvalidChoice("Invalid timezone."))
+	}
+	if !currency.IsValid(s.Currency) {
 		errs.Add("currency", validation.InvalidChoice("Invalid currency."))
 	}
 

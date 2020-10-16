@@ -14,9 +14,11 @@ func GetNames() []string {
 }
 
 // IsValid checks whether a timezone name is valid.
+//
+// An empty timezone name is considered valid.
 func IsValid(name string) bool {
 	if name == "" {
-		return false
+		return true
 	}
 	i := sort.SearchStrings(names, name)
 	if i >= len(names) {
