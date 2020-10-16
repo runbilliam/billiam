@@ -4,7 +4,7 @@
 package timezone
 
 // Version is the zoneinfo version from which the data is derived.
-const Version = "2020a"
+const Version = "2020b"
 
 var names = []string{
 	"Africa/Abidjan",
